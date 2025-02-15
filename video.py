@@ -24,10 +24,17 @@ aria2.set_global_options(options)
 
 
 async def download_video(url, reply_msg, user_mention, user_id):
-    response = requests.get(f"https://ashlynn.serv00.net/Ashlynnterabox.php/?url={url}")
+    response = requests.get(
+        f"https://terabox-downloader-direct-download-link-generator2.p.rapidapi.com/url",
+        headers={
+            "x-rapidapi-key": "36e8d2ba42msh6d56ec4a89531fcp1cdba4jsnbf32e29dd4b0",
+            "x-rapidapi-host": "terabox-downloader-direct-download-link-generator2.p.rapidapi.com"
+        },
+        params={"url": url}
+    )
     response.raise_for_status()
     data = response.json()
-
+    
     resolutions = data["response"][0]["resolutions"]
     fast_download_link = resolutions["Fast Download"]
     hd_download_link = resolutions["HD Video"]
