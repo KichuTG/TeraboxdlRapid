@@ -27,7 +27,8 @@ async def download_video(url, reply_msg, user_mention, user_id):
     try:  
         # Requesting the direct download link
         response = requests.get(f"https://teradlrobot.cheemsbackup.workers.dev/?url={url}")  
-        response.raise_for_status()  
+        response.raise_for_status()
+        await asyncio.sleep(10)
         direct_link = response.text.strip()  # The API returns the direct file link
 
         # Adding the download to Aria2  
