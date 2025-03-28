@@ -1,73 +1,76 @@
-import requests
-import aria2p
-from datetime import datetime
-from status import format_progress_bar
-import asyncio
-import logging
-from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from asyncio import sleep
-aria2 = aria2p.API(
-    aria2p.Client(
-        host="http://localhost",
-        port=6800,
-        secret=""
-    )
-)
-options = {
-    "max-tries": "50",
-    "retry-wait": "20",
-    "continue": "true"
-}
+import requests  
+import aria2p  
+from datetime import datetime  
+from status import format_progress_bar  
+import asyncio  
+import os, time  
+import logging  
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton  
 
-aria2.set_global_options(options)
+aria2 = aria2p.API(  
+    aria2p.Client(  
+        host="http://localhost",  
+        port=6800,  
+        secret=""  
+    )  
+)  
 
+options = {  
+    "max-tries": "50",  
+    "retry-wait": "20",  
+    "continue": "true"  
+}  
 
-async def download_video(url, reply_msg, user_mention, user_id):
-    try:
-        await reply_msg.edit_text("Processing your request, please wait...")
+aria2.set_global_options(options)  
 
-        # Request the new API
-        api_url = f"https://teradlrobot.cheemsbackup.workers.dev/?url={url}"
-        await asyncio.sleep(15)  # Wait for the API to process the request
+async def download_video(url, reply_msg, user_mention, user_id):  
+    try:  
+        # Requesting the direct download link
+        response = requests.get(f"https://teradlrobot.cheemsbackup.workers.dev/?url={url}")  
+        response.raise_for_status()  
+        direct_link = response.text.strip()  # The API returns the direct file link
 
-        download = aria2.add_uris([api_url])
-        start_time = datetime.now()
+        # Adding the download to Aria2  
+        download = aria2.add_uris([direct_link])  
+        start_time = datetime.now()  
 
-        while not download.is_complete:
-            download.update()
-            percentage = download.progress
-            done = download.completed_length
-            total_size = download.total_length
-            speed = download.download_speed
-            eta = download.eta
-            elapsed_time_seconds = (datetime.now() - start_time).total_seconds()
-            progress_text = format_progress_bar(
-                filename="Downloading Terabox File",
-                percentage=percentage,
-                done=done,
-                total_size=total_size,
-                status="Downloading",
-                eta=eta,
-                speed=speed,
-                elapsed=elapsed_time_seconds,
-                user_mention=user_mention,
-                user_id=user_id,
-                aria2p_gid=download.gid
-            )
-            await reply_msg.edit_text(progress_text)
-            await asyncio.sleep(2)
+        while not download.is_complete:  
+            download.update()  
+            percentage = download.progress  
+            done = download.completed_length  
+            total_size = download.total_length  
+            speed = download.download_speed  
+            eta = download.eta  
+            elapsed_time_seconds = (datetime.now() - start_time).total_seconds()  
 
-        if download.is_complete:
-            file_path = download.files[0].path
-            await reply_msg.edit_text("ᴜᴘʟᴏᴀᴅɪɴɢ...")
+            progress_text = format_progress_bar(  
+                filename=download.name,  # Extract file name from aria2  
+                percentage=percentage,  
+                done=done,  
+                total_size=total_size,  
+                status="Downloading",  
+                eta=eta,  
+                speed=speed,  
+                elapsed=elapsed_time_seconds,  
+                user_mention=user_mention,  
+                user_id=user_id,  
+                aria2p_gid=download.gid  
+            )  
+            await reply_msg.edit_text(progress_text)  
+            await asyncio.sleep(2)  
 
-            return file_path, None, "Terabox File"
-    except Exception as e:
-        logging.error(f"Error handling message: {e}")
-        await reply_msg.reply_text(
-            "Failed to download the file. Please try again later."
-        )
+        if download.is_complete:  
+            file_path = download.files[0].path  
+            file_size = download.total_length  # Get file size  
+
+            await reply_msg.edit_text("ᴜᴘʟᴏᴀᴅɪɴɢ...")  
+            return file_path, file_size, download.name  # Return filename and size  
+      
+    except Exception as e:  
+        logging.error(f"Error handling download: {e}")  
+        await reply_msg.reply_text("⚠ Error occurred while downloading the file. Please try again.")  
         return None, None, None
+
 # async def download_video(url, reply_msg, user_mention, user_id):
 #     response = requests.get(f"https://teraboxvideodownloader.nepcoderdevs.workers.dev/?url={url}")
 #     response.raise_for_status()
