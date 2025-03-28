@@ -17,7 +17,7 @@ aria2 = aria2p.API(
 
 options = {  
     "max-tries": "50",  
-    "retry-wait": "20",  
+    "retry-wait": "3",  
     "continue": "true"  
 }  
 
