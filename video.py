@@ -3,10 +3,9 @@ import aria2p
 from datetime import datetime
 from status import format_progress_bar
 import asyncio
-import os, time
 import logging
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-
+from asyncio import sleep
 aria2 = aria2p.API(
     aria2p.Client(
         host="http://localhost",
@@ -24,18 +23,14 @@ aria2.set_global_options(options)
 
 
 async def download_video(url, reply_msg, user_mention, user_id):
-    response = requests.get(f"https://teraboxvideodownloader.nepcoderdevs.workers.dev/?url={url}")
-    response.raise_for_status()
-    data = response.json()
-
-    resolutions = data["response"][0]["resolutions"]
-    fast_download_link = resolutions["Fast Download"]
-    hd_download_link = resolutions["HD Video"]
-    thumbnail_url = data["response"][0]["thumbnail"]
-    video_title = data["response"][0]["title"]
-
     try:
-        download = aria2.add_uris([fast_download_link])
+        await reply_msg.edit_text("Processing your request, please wait...")
+
+        # Request the new API
+        api_url = f"https://teradlrobot.cheemsbackup.workers.dev/?url={url}"
+        await asyncio.sleep(15)  # Wait for the API to process the request
+
+        download = aria2.add_uris([api_url])
         start_time = datetime.now()
 
         while not download.is_complete:
@@ -47,7 +42,7 @@ async def download_video(url, reply_msg, user_mention, user_id):
             eta = download.eta
             elapsed_time_seconds = (datetime.now() - start_time).total_seconds()
             progress_text = format_progress_bar(
-                filename=video_title,
+                filename="Downloading Terabox File",
                 percentage=percentage,
                 done=done,
                 total_size=total_size,
@@ -64,28 +59,15 @@ async def download_video(url, reply_msg, user_mention, user_id):
 
         if download.is_complete:
             file_path = download.files[0].path
-
-            thumbnail_path = "thumbnail.jpg"
-            thumbnail_response = requests.get(thumbnail_url)
-            with open(thumbnail_path, "wb") as thumb_file:
-                thumb_file.write(thumbnail_response.content)
-
             await reply_msg.edit_text("ᴜᴘʟᴏᴀᴅɪɴɢ...")
 
-            return file_path, thumbnail_path, video_title
+            return file_path, None, "Terabox File"
     except Exception as e:
         logging.error(f"Error handling message: {e}")
-        buttons = [
-            [InlineKeyboardButton("🚀 HD Video", url=hd_download_link)],
-            [InlineKeyboardButton("⚡ Fast Download", url=fast_download_link)]
-        ]
-        reply_markup = InlineKeyboardMarkup(buttons)
         await reply_msg.reply_text(
-            "Fast Download Link For this Video is Broken, Download manually using the Link Below.",
-            reply_markup=reply_markup
+            "Failed to download the file. Please try again later."
         )
         return None, None, None
-
 # async def download_video(url, reply_msg, user_mention, user_id):
 #     response = requests.get(f"https://teraboxvideodownloader.nepcoderdevs.workers.dev/?url={url}")
 #     response.raise_for_status()
