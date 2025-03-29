@@ -69,7 +69,7 @@ async def download_video(url, reply_msg, user_mention, user_id):
       
     except Exception as e:  
         logging.error(f"Error handling download: {e}")  
-        await reply_msg.reply_text("⚠ Error occurred while downloading the file. Please try again.")  
+        await reply_msg.reply_text(f"{e} ⚠ Error occurred while downloading the file. Please try again.")  
         return None, None, None
 
 # async def download_video(url, reply_msg, user_mention, user_id):
